@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dominó Numérico Infantil - Aprendiendo con la NEM</title>
+    <!-- Google Fonts: Fredoka / Quicksand for a friendly, child-friendly style -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Main App Container -->
+    <div id="app" class="app-container">
+        
+        <!-- HEADER / TOP NAV -->
+        <header class="app-header">
+            <div class="logo">
+                <i class="fa-solid fa-dice-d6 game-icon-spin"></i>
+                <h1>Dominó Numérico</h1>
+            </div>
+            <div class="header-buttons">
+                <button id="btn-toggle-voice" class="btn btn-secondary btn-icon" title="Desactivar narración de voz">
+                    <i class="fa-solid fa-volume-high"></i> <span>Voz: ON</span>
+                </button>
+                <button id="btn-pedagogic" class="btn btn-secondary btn-icon" title="Guía Pedagógica NEM">
+                    <i class="fa-solid fa-graduation-cap"></i> <span>NEM Fase 2</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- 1. SETUP SCREEN -->
+        <section id="screen-setup" class="screen active">
+            <div class="card setup-card">
+                <div class="setup-header">
+                    <h2>¡Bienvenidos al Dominó de los Números!</h2>
+                    <p class="subtitle">Aprende jugando, contando y emparejando números.</p>
+                </div>
+
+                <div class="setup-group">
+                    <label class="group-title">¿Cuántos van a jugar hoy?</label>
+                    <div class="player-count-selector">
+                        <button type="button" class="btn-count btn-count-active" data-count="2">2 Jugadores</button>
+                        <button type="button" class="btn-count" data-count="3">3 Jugadores</button>
+                        <button type="button" class="btn-count" data-count="4">4 Jugadores</button>
+                    </div>
+                </div>
+
+                <div class="setup-group">
+                    <label class="group-title">Personaliza a los jugadores:</label>
+                    <div id="players-config-list" class="players-config-list">
+                        <!-- Dynamic Player Configuration Rows will be inserted here by JS -->
+                    </div>
+                </div>
+
+                <button id="btn-start-game" class="btn btn-primary btn-large">
+                    <i class="fa-solid fa-play"></i> ¡Comenzar a Jugar!
+                </button>
+            </div>
+        </section>
+
+        <!-- 2. INTERMEDIATE TURN SCREEN (PASS DEVICE) -->
+        <section id="screen-turn-transition" class="screen">
+            <div class="card transition-card">
+                <div class="transition-avatar" id="transition-player-avatar">🐰</div>
+                <h2 class="transition-title">¡Es el turno de <span id="transition-player-name">Jugador</span>!</h2>
+                <p class="transition-instruction">Por favor, pasa el dispositivo y presiona el botón para revelar tus fichas de forma segura.</p>
+                <button id="btn-reveal-turn" class="btn btn-primary btn-large">
+                    <i class="fa-solid fa-eye"></i> Ver mis fichas
+                </button>
+            </div>
+        </section>
+
+        <!-- 3. MAIN GAME SCREEN -->
+        <section id="screen-game" class="screen">
+            <div class="game-layout">
+                
+                <!-- TOP STATUS: Active Player and Boneyard info -->
+                <div class="game-top-bar">
+                    <div class="current-player-indicator" id="current-player-indicator">
+                        <div class="player-badge">
+                            <span class="badge-avatar" id="current-avatar">🐻</span>
+                            <span class="badge-name" id="current-name">Jugador 1</span>
+                        </div>
+                        <div class="turn-bubble">¡Es tu turno de buscar parejas!</div>
+                    </div>
+
+                    <!-- Boneyard (Pozo) -->
+                    <div class="boneyard-container" id="boneyard-container">
+                        <div class="boneyard-pile" id="btn-draw" title="Haz clic aquí para robar una ficha">
+                            <div class="domino-back">
+                                <span class="boneyard-question">?</span>
+                            </div>
+                            <div class="boneyard-label">El Pozo</div>
+                            <div class="boneyard-count" id="boneyard-count">14 fichas</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BOARD: The chain of played dominoes -->
+                <div class="board-container">
+                    <div class="board-scroll-help">
+                        <i class="fa-solid fa-arrows-left-right"></i> Desliza para ver todo el tren de fichas
+                    </div>
+                    <div class="board-wrapper">
+                        <div id="game-board" class="game-board">
+                            <!-- Played dominoes will be rendered here dynamically -->
+                            <div class="board-placeholder">¡El tablero está vacío! Empieza la partida.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- HAND OVERLAYS (e.g. Side Picker when a card fits both sides) -->
+                <div id="side-picker-overlay" class="side-picker-overlay hidden">
+                    <div class="side-picker-card">
+                        <h3>¿Dónde quieres poner tu ficha?</h3>
+                        <p>Esta ficha sirve para los dos lados del tren.</p>
+                        <div class="side-picker-buttons">
+                            <button id="btn-pick-left" class="btn btn-choice">
+                                <i class="fa-solid fa-circle-arrow-left"></i> Izquierda
+                            </button>
+                            <button id="btn-pick-right" class="btn btn-choice">
+                                Derecha <i class="fa-solid fa-circle-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ACTIVE PLAYER'S CONTROLS AND TILES -->
+                <div class="player-panel">
+                    <div class="player-controls">
+                        <div class="controls-status" id="controls-status-msg">
+                            Selecciona una ficha para jugar
+                        </div>
+                        <div class="controls-actions">
+                            <button id="btn-pass-turn" class="btn btn-warning hidden">
+                                <i class="fa-solid fa-forward"></i> Pasar Turno
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Player Hand -->
+                    <div class="player-hand-container">
+                        <div class="hand-header">Mis Fichas:</div>
+                        <div id="player-hand" class="player-hand">
+                            <!-- Player tiles rendered here -->
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- 4. RESULTS SCREEN (GAME OVER) -->
+        <section id="screen-results" class="screen">
+            <div class="card results-card">
+                <div class="trophy-container">
+                    <div class="trophy-emoji">🏆</div>
+                </div>
+                <h2 id="winner-title">¡Tenemos un Ganador!</h2>
+                <div class="winner-celebration" id="winner-announcement">
+                    <span id="winner-avatar" class="winner-avatar">🦊</span>
+                    <span id="winner-name" class="winner-name">Jugador</span>
+                </div>
+                <p class="winner-reason" id="winner-reason">¡Ha logrado colocar todas sus fichas primero!</p>
+
+                <!-- Points Summary Table -->
+                <div class="results-table-container">
+                    <h3>Puntuación Final (Menos puntos es mejor):</h3>
+                    <table class="results-table">
+                        <thead>
+                            <tr>
+                                <th>Jugador</th>
+                                <th>Fichas Restantes</th>
+                                <th>Puntos Totales</th>
+                            </tr>
+                        </thead>
+                        <tbody id="results-table-body">
+                            <!-- Results will be generated by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <button id="btn-restart" class="btn btn-primary btn-large">
+                    <i class="fa-solid fa-rotate-left"></i> Volver a Jugar
+                </button>
+            </div>
+        </section>
+
+        <!-- PEDAGOGICAL GUIDE MODAL -->
+        <div id="modal-pedagogic" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2><i class="fa-solid fa-graduation-cap"></i> Guía Pedagógica (Nueva Escuela Mexicana)</h2>
+                    <span class="close-modal" id="close-pedagogic">&times;</span>
+                </div>
+                <div class="modal-body">
+                    <h3>Fase 2 - Educación Preescolar</h3>
+                    <p>Esta aplicación digital ha sido diseñada como un recurso educativo interactivo para complementar el trabajo docente en el aula de preescolar, alineándose con las directrices de la <strong>Nueva Escuela Mexicana (NEM)</strong>.</p>
+                    
+                    <div class="nem-box spc">
+                        <h4>Campo Formativo: Saberes y Pensamiento Científico</h4>
+                        <p><strong>Contenido:</strong> Los saberes numéricos como herramienta para resolver situaciones del entorno, en diversos contextos socioculturales.</p>
+                    </div>
+
+                    <div class="nem-box pda">
+                        <h4>Procesos de Desarrollo de Aprendizaje (PDA) relacionados:</h4>
+                        <ul>
+                            <li><strong>2º de Preescolar:</strong> Usa números en juegos y situaciones cotidianas de su entorno.</li>
+                            <li><strong>3º de Preescolar:</strong> Resuelve de manera colaborativa situaciones sencillas que involucran números y que implican juntar, agregar, separar o quitar elementos.</li>
+                        </ul>
+                    </div>
+
+                    <h3>¿Cómo apoya este juego al desarrollo infantil?</h3>
+                    <ol>
+                        <li><strong>Reconocimiento de Grafías Numéricas:</strong> Al reemplazar los puntos tradicionales por números de colores llamativos (ej. 3|5), se refuerza directamente la asociación de la grafía numérica escrita con su valor, facilitando la comprensión para niños en etapa preescolar.</li>
+                        <li><strong>Pensamiento Lógico y Asociación:</strong> Los niños practican el emparejamiento uno a uno de números iguales (identificar que el 4 va con el 4) para continuar la secuencia en el tren de dominó.</li>
+                        <li><strong>Habilidades de Conteo e Iniciación al Sumatorio:</strong> Al final de la partida, los niños cuentan las fichas sobrantes y suman el valor de los números impresos en ellas, lo cual promueve la resolución colaborativa de operaciones matemáticas básicas (juntar/agregar).</li>
+                        <li><strong>Socialización y Regulación:</strong> Jugar por turnos (de 2 a 4 jugadores) enseña a los niños a respetar el tiempo del otro, seguir reglas sencillas de juego y colaborar en el dispositivo.</li>
+                    </ol>
+
+                    <div class="nem-box tips">
+                        <h4>💡 Sugerencias didácticas para la educadora / el educador:</h4>
+                        <ul>
+                            <li><strong>Diálogo Guiado:</strong> Durante el juego, invite a los niños a verbalizar sus jugadas en voz alta: <em>"Tengo un 3 en mi ficha y lo voy a juntar con el 3 del caminito"</em>.</li>
+                            <li><strong>Estrategia Colaborativa:</strong> Aunque es una competencia, promueva que se ayuden mutuamente a identificar si tienen una ficha que encaje en los extremos si algún alumno se siente bloqueado.</li>
+                            <li><strong>Sumatoria Grupal:</strong> Al final del juego, realice la suma de los puntos de las fichas sobrantes en el pizarrón o con semillas/frijoles físicos, vinculando la experiencia digital con material concreto.</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button id="btn-close-pedagogic-footer" class="btn btn-primary">¡Entendido!</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Main Game Script -->
+    <script src="app.js"></script>
+</body>
+</html>
